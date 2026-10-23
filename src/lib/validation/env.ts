@@ -36,16 +36,28 @@ export function getEnv(): Env {
     }
   }
 
+  const isBuildPhase =
+    process.env.NEXT_PHASE === "phase-production-build" ||
+    process.env.npm_lifecycle_event === "build";
+
   const result = envSchema.safeParse({
-    DATABASE_URL: process.env.DATABASE_URL,
+    DATABASE_URL:
+      process.env.DATABASE_URL ||
+      (isBuildPhase
+        ? "postgresql://postgres:postgres@localhost:5432/build_placeholder"
+        : undefined),
     APP_URL: process.env.APP_URL || "http://localhost:3000",
     NODE_ENV: process.env.NODE_ENV || "development",
     ADMIN_SESSION_SECRET:
       process.env.ADMIN_SESSION_SECRET ||
-      (process.env.NODE_ENV === "production" ? "" : "dev_admin_session_secret_32_characters_minimum"),
+      (isBuildPhase || process.env.NODE_ENV !== "production"
+        ? "dev_admin_session_secret_32_characters_minimum"
+        : ""),
     REPORT_SESSION_SECRET:
       process.env.REPORT_SESSION_SECRET ||
-      (process.env.NODE_ENV === "production" ? "" : "dev_report_session_secret_32_characters_minimum"),
+      (isBuildPhase || process.env.NODE_ENV !== "production"
+        ? "dev_report_session_secret_32_characters_minimum"
+        : ""),
     S3_ENDPOINT: process.env.S3_ENDPOINT,
     S3_BUCKET: process.env.S3_BUCKET,
     S3_REGION: process.env.S3_REGION,
